@@ -30,15 +30,14 @@ data1 = as.data.frame(data1)
 head(data1)
 dim(data1)
 ```
-Change X1PUBPRI to everything 1 = 1 and everything zero this will get you 1 is public and all nonpublic is 0. 
+Change X1PUBPRI to everything 1 = 0 all else 0, making the treatment group nonpublic schools 
 ```{r}
 XPUBPRI = cbind(X1PUBPRI = data$X1PUBPRI, X2PUBPRI = data$X2PUBPRI, X3PUBPRI = data$X3PUBPRI, X4PUBPRI = data$X4PUBPRI)
 
-XPUBPRI = apply(XPUBPRI, 2, function(x){ifelse(x == 1, 1, 0)})
-data1 = data1[-c(34:37)]
+XPUBPRI = as.data.frame(apply(XPUBPRI, 2, function(x){ifelse(x == 1, 0, 1)}))
+data1 = data1[-c(33:38)]
 head(data1)
 data1 = cbind(data1, XPUBPRI)
-
 ```
 
 Now make into long form.  
@@ -55,11 +54,11 @@ library(Amelia)
 library(mitools)
 library(survey)
 m = 5
-a.out = amelia(x = data1, m=m, logistic = c("X1PUBPRI"))
+a.out = amelia(x = data1, m=m, noms = "X1PUBPRI", ords = "time")
 # Now we can creat seperate data set and then analyze them seperately and combine them later with the mi.meld function in Ameila
 summary(a.out)
-compare.density(a.out, var = "X1TCHCON", main = "Observed and Imputed values of Self Control")
-disperse(a.out, dims = 1, m = 5)
+#compare.density(a.out, var = "X1TCHCON", main = "Observed and Imputed values of Self Control")
+#disperse(a.out, dims = 1, m = 5)
 write.amelia(obj = a.out, file.stem = "ECLSK")
 head(data1)
 ```
@@ -76,7 +75,7 @@ ECLSK1 = as.data.frame(ECLSK1)
 
 # Need to change all of these to include the new covariates
 m.out1 = matchit(X1PUBPRI ~ time + X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK1, method = "nearest", ratio = 1)
-ECLSK1$X1PUBPRI
+
 
 plot(m.out1, type = "jitter")
 plot(m.out1, type = "hist")
@@ -90,18 +89,13 @@ m.dataSD1 = apply(m.data1,2, sd)
 library(Zelig)
 m.out1$weights
 # Grabbing the parameter estimates and se's
+library(nlme)
+
 z.outSC1 = zelig(X1PRNCON ~ + S2REGSKL +  X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNSOC + X1PRNSAD + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD +X1PRNIMP + X1RTHET + X1MTHET, model = "ls" , data = match.data(m.out1))
 summary(z.outSC1)
 
 SCCof1 =  z.outSC1$get_coef()
 SCSes1 = z.outSC1$get_se()
-
-
-# Here is for the social interaction variable.
-z.outSI1 = zelig(X1PRNSOC ~ + S2REGSKL +  X1_CHSEX_R + X1HPARNT  + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON  + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD +X1PRNIMP + X1RTHET + X1MTHET, model = "ls", data = match.data(m.out1))
-summary(z.outSI1)
-SICof1 =  z.outSI1$get_coef()
-SISes1 = z.outSI1$get_se()
 
 ```
 Now we are getting residual analyses for first the data set
@@ -135,8 +129,7 @@ ECLSK2 = ECLSK2[c(-1)]
 ECLSK2 = na.omit(ECLSK2)
 ECLSK2 = as.data.frame(ECLSK2)
 
-m.out2 = matchit(S2REGSKL ~ X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD + X1PRNIMP + X1RTHET + X1MTHET, data = ECLSK1, method = "nearest", ratio = 1)
-
+m.out2 = matchit(X1PUBPRI ~ time + X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK2, method = "nearest", ratio = 1)
 plot(m.out2, type = "jitter")
 plot(m.out2, type = "hist")
 
@@ -162,7 +155,8 @@ ECLSK3 = ECLSK3[c(-1)]
 ECLSK3 = na.omit(ECLSK3)
 ECLSK3 = as.data.frame(ECLSK3)
 
-m.out3 = matchit(S2REGSKL ~ X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD + X1PRNIMP + X1RTHET + X1MTHET, data = ECLSK1, method = "nearest", ratio = 1)
+m.out3 = matchit(X1PUBPRI ~ time + X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK3, method = "nearest", ratio = 1)
+
 
 plot(m.out3, type = "jitter")
 plot(m.out3, type = "hist")
@@ -189,7 +183,8 @@ ECLSK4 = ECLSK4[c(-1)]
 ECLSK4 = na.omit(ECLSK4)
 ECLSK4 = as.data.frame(ECLSK4)
 
-m.out4 = matchit(S2REGSKL ~ X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD + X1PRNIMP + X1RTHET + X1MTHET, data = ECLSK1, method = "nearest", ratio = 1)
+m.out4 = matchit(X1PUBPRI ~ time + X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK4, method = "nearest", ratio = 1)
+
 summary(m.out4)
 plot(m.out4, type = "jitter")
 plot(m.out4, type = "hist")
@@ -216,7 +211,8 @@ ECLSK5 = ECLSK5[c(-1)]
 ECLSK5 = na.omit(ECLSK5)
 ECLSK5 = as.data.frame(ECLSK5)
 
-m.out5 = matchit(S2REGSKL ~ X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD + X1PRNIMP + X1RTHET + X1MTHET, data = ECLSK1, method = "nearest", ratio = 1)
+m.out5 = matchit(X1PUBPRI ~ time + X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK5, method = "nearest", ratio = 1)
+
 summary(m.out5)
 plot(m.out5, type = "jitter")
 plot(m.out5, type = "hist")
