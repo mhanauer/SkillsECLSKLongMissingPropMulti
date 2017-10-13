@@ -22,7 +22,7 @@ X1TCHINT = X1 TEACHER REPORT INTERN PROB BEHAVIORS
 #data = read.csv("ELCS-K-2011.csv", header = TRUE)
 
 # Now collecting variables for all teacher self report
-data1 = cbind(X1TCHAPP = data$X1TCHAPP, X2TCHAPP = data$X2TCHAPP, X3TCHAPP = data$X3TCHAPP, X4TCHAPP = data$X4TCHAPP, X1TCHCON = data$X1TCHCON, X2TCHCON = data$X2TCHCON, X3TCHCON = data$X3TCHCON, X4TCHCON = data$X4TCHCON,X1TCHPER = data$X1TCHPER, X2TCHPER = data$X2TCHPER, X3TCHPER = data$X3TCHPER, X4TCHPER = data$X4TCHPER, X1TCHEXT = data$X1TCHEXT, X2TCHEXT = data$X2TCHEXT, X3TCHEXT = data$X3TCHEXT, X4TCHEXT = data$X4TCHEXT, X1TCHINT = data$X1TCHINT, X2TCHINT = data$X2TCHINT, X3TCHINT = data$X3TCHINT, X4TCHINT = data$X4TCHINT,X1RTHET = data$X1RTHET, X2RTHET = data$X2RTHET, X3RTHET = data$X3RTHET, X4RTHET = data$X4RTHET, X1MTHET = data$X1MTHET, X2MTHET = data$X2MTHET, X3MTHET = data$X3MTHET, X4MTHET = data$X4MTHET, X1BMI = data$X1BMI, X2BMI = data$X2BMI, X3BMI = data$X3BMI, X4BMI = data$X4BMI, X1PUBPRI = data$X1PUBPRI, X2PUBPRI = data$X2PUBPRI, X3PUBPRI = data$X3PUBPRI, X4PUBPRI = data$X4PUBPRI)
+data1 = cbind(id = 1:length(data1$X1TCHAPP), X1TCHAPP = data$X1TCHAPP, X2TCHAPP = data$X2TCHAPP, X3TCHAPP = data$X3TCHAPP, X4TCHAPP = data$X4TCHAPP, X1TCHCON = data$X1TCHCON, X2TCHCON = data$X2TCHCON, X3TCHCON = data$X3TCHCON, X4TCHCON = data$X4TCHCON,X1TCHPER = data$X1TCHPER, X2TCHPER = data$X2TCHPER, X3TCHPER = data$X3TCHPER, X4TCHPER = data$X4TCHPER, X1TCHEXT = data$X1TCHEXT, X2TCHEXT = data$X2TCHEXT, X3TCHEXT = data$X3TCHEXT, X4TCHEXT = data$X4TCHEXT, X1TCHINT = data$X1TCHINT, X2TCHINT = data$X2TCHINT, X3TCHINT = data$X3TCHINT, X4TCHINT = data$X4TCHINT,X1RTHET = data$X1RTHET, X2RTHET = data$X2RTHET, X3RTHET = data$X3RTHET, X4RTHET = data$X4RTHET, X1MTHET = data$X1MTHET, X2MTHET = data$X2MTHET, X3MTHET = data$X3MTHET, X4MTHET = data$X4MTHET, X1BMI = data$X1BMI, X2BMI = data$X2BMI, X3BMI = data$X3BMI, X4BMI = data$X4BMI, X1PUBPRI = data$X1PUBPRI, X2PUBPRI = data$X2PUBPRI, X3PUBPRI = data$X3PUBPRI, X4PUBPRI = data$X4PUBPRI)
 head(data1)
 # Change the -9 to NAs
 data1 = apply(data1, 2, function(x){ifelse(x == -9, NA, x)})
@@ -30,23 +30,13 @@ data1 = as.data.frame(data1)
 head(data1)
 dim(data1)
 ```
-Change X1PUBPRI to everything 1 = 1 and everything zero this will get you 1 is public and all nonpublic is 0. 
+Change X1PUBPRI to everything 1 = 0 all else 0, making the treatment group nonpublic schools.  Then get rid of the old public and private, because you only want the new values that only have 1's and 0's 
 ```{r}
 XPUBPRI = cbind(X1PUBPRI = data$X1PUBPRI, X2PUBPRI = data$X2PUBPRI, X3PUBPRI = data$X3PUBPRI, X4PUBPRI = data$X4PUBPRI)
 
-XPUBPRI = apply(XPUBPRI, 2, function(x){ifelse(x == 1, 1, 0)})
-data1 = data1[-c(34:37)]
-head(data1)
-data1 = cbind(data1, XPUBPRI)
-
-```
-
-Now make into long form.  
-```{r}
-data1 = reshape(data1, varying = list(c("X1TCHAPP", "X2TCHAPP", "X3TCHAPP", "X4TCHAPP"), c("X1TCHCON", "X2TCHCON", "X3TCHCON", "X4TCHCON"), c("X1TCHPER", "X2TCHPER", "X3TCHPER", "X4TCHPER"), c("X1TCHEXT", "X2TCHEXT", "X3TCHEXT", "X4TCHEXT"), c("X1TCHINT", "X2TCHINT", "X3TCHINT", "X4TCHINT"), c("X1RTHET", "X2RTHET", "X3RTHET", "X4RTHET"), c("X1MTHET", "X2MTHET", "X3MTHET", "X4RTHET"),c("X1MTHET", "X2MTHET", "X3MTHET", "X4MTHET"), c("X1BMI", "X2BMI", "X3BMI", "X4BMI"), c("X1PUBPRI", "X2PUBPRI", "X3PUBPRI","X4PUBPRI")), times = c(1,2,3,4), direction = "long")
-data1 = as.data.frame(data1)
-dim(data1)
-head(data1)
+XPUBPRI = as.data.frame(apply(XPUBPRI, 2, function(x){ifelse(x == 1, 0, 1)}))
+data1 = data1[-c(34:38)]
+data1 = cbind(data1, XPUBPRI); head(data1)
 ```
 Here we will use Amelia.  Need to set m as five for five imputed data sets.  Then we place each of the variables into their appropriate categories.
 
@@ -55,28 +45,72 @@ library(Amelia)
 library(mitools)
 library(survey)
 m = 5
-a.out = amelia(x = data1, m=m, logistic = c("X1PUBPRI"))
+a.out = amelia(x = data1, m=m, noms = "X1PUBPRI", idvars = "id")
 # Now we can creat seperate data set and then analyze them seperately and combine them later with the mi.meld function in Ameila
-summary(a.out)
-compare.density(a.out, var = "X1TCHCON", main = "Observed and Imputed values of Self Control")
-disperse(a.out, dims = 1, m = 5)
+#summary(a.out)
+#compare.density(a.out, var = "X1TCHCON", main = "Observed and Imputed values of Self Control")
+#disperse(a.out, dims = 1, m = 5)
 write.amelia(obj = a.out, file.stem = "ECLSK")
 head(data1)
 ```
-Now we are analyzing one data set, using matchIT and seeing if we can get a regular regression and then a multilevel model with time.  We matched everyone.
+Read all five data sets back in first.  
 
-Here are the estimates for the first model.  Need to grab the parameter estimates and sd's 
+Name them the same as below.    
+
+Grab the firsts of every variable.  These five will be used for matching the variables.
+
+Now you need to merge the data based upon id
 ```{r}
-library(MatchIt)
 setwd("~/Google Drive/PARCS/Projects/PropScore/Data")
 ECLSK1  = read.csv("ECLSK1.csv", header = TRUE)
 ECLSK1 = na.omit(ECLSK1)
 ECLSK1 = as.data.frame(ECLSK1)
 
+ECLSK2  = read.csv("ECLSK2.csv", header = TRUE)
+ECLSK2 = na.omit(ECLSK2)
+ECLSK2 = as.data.frame(ECLSK2)
 
-# Need to change all of these to include the new covariates
-m.out1 = matchit(X1PUBPRI ~ time + X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK1, method = "nearest", ratio = 1)
-ECLSK1$X1PUBPRI
+ECLSK3  = read.csv("ECLSK3.csv", header = TRUE)
+ECLSK3 = na.omit(ECLSK3)
+ECLSK3 = as.data.frame(ECLSK3)
+
+ECLSK4  = read.csv("ECLSK4.csv", header = TRUE)
+ECLSK4 = na.omit(ECLSK4)
+ECLSK4 = as.data.frame(ECLSK4)
+
+ECLSK5  = read.csv("ECLSK5.csv", header = TRUE)
+ECLSK5 = na.omit(ECLSK5)
+ECLSK5 = as.data.frame(ECLSK5)
+
+# Now grab only the first from everydata set.  Adding a one to each of them to represent that only have the first variables.
+ECLSK11 = cbind(X1TCHAPP= ECLSK1$X1TCHAPP, X1TCHCON =ECLSK1$X1TCHCON, X1TCHPER=ECLSK1$X1TCHPER, X1TCHEXT=ECLSK1$X1TCHEXT, X1TCHINT=ECLSK1$X1TCHINT, X1RTHET=ECLSK1$X1RTHET, X1MTHET=ECLSK1$X1MTHET, X1BMI=ECLSK1$X1BMI, X1PUBPRI=ECLSK1$X1PUBPRI); head(ECLSK11)
+
+ECLSK21 = cbind(X1TCHAPP=ECLSK2$X1TCHAPP,X1TCHCON=ECLSK2$X1TCHCON, X1TCHPER=ECLSK2$X1TCHPER, X1TCHEXT=ECLSK2$X1TCHEXT, X1TCHINT=ECLSK2$X1TCHINT, X1RTHET=ECLSK2$X1RTHET, X1MTHET=ECLSK2$X1MTHET, X1BMI=ECLSK2$X1BMI, X1PUBPRI=ECLSK2$X1PUBPRI); head(ECLSK21)
+
+ECLSK31 = cbind(X1TCHAPP=ECLSK3$X1TCHAPP,X1TCHCON=ECLSK3$X1TCHCON, X1TCHPER=ECLSK3$X1TCHPER, X1TCHEXT=ECLSK3$X1TCHEXT, X1TCHINT=ECLSK3$X1TCHINT, X1RTHET=ECLSK3$X1RTHET, X1MTHET=ECLSK3$X1MTHET, X1BMI=ECLSK3$X1BMI, X1PUBPRI=ECLSK3$X1PUBPRI); head(ECLSK31)
+
+ECLSK41 = cbind(X1TCHAPP=ECLSK4$X1TCHAPP,X1TCHCON=ECLSK4$X1TCHCON, X1TCHPER=ECLSK4$X1TCHPER, X1TCHEXT=ECLSK4$X1TCHEXT, X1TCHINT=ECLSK4$X1TCHINT, X1RTHET=ECLSK4$X1RTHET,X1MTHET= ECLSK4$X1MTHET, X1BMI=ECLSK4$X1BMI, X1PUBPRI=ECLSK4$X1PUBPRI); head(ECLSK41)
+
+ECLSK51 = cbind(X1TCHAPP=ECLSK5$X1TCHAPP,X1TCHCON=ECLSK5$X1TCHCON, X1TCHPER=ECLSK5$X1TCHPER, X1TCHEXT=ECLSK5$X1TCHEXT, X1TCHINT=ECLSK5$X1TCHINT, X1RTHET=ECLSK5$X1RTHET, X1MTHET=ECLSK5$X1MTHET, X1BMI=ECLSK5$X1BMI, X1PUBPRI=ECLSK5$X1PUBPRI); head(ECLSK51)
+```
+Now get rid of first variables in each data set.  Then merge with first data sets.
+```{r}
+ECLSK1$X1TCHAPP = ECLSK1$X1TCHCON = ECLSK1$X1TCHPER = ECLSK1$X1TCHEXT= ECLSK1$X1TCHINT= ECLSK1$X1RTHET= ECLSK1$X1MTHET= ECLSK1$X1BMI= ECLSK1$X1PUBPRI = NULL; head(ECLSK1)
+          
+ECLSK2$X1TCHAPP = ECLSK2$X1TCHCON = ECLSK2$X1TCHPER = ECLSK2$X1TCHEXT= ECLSK2$X1TCHINT= ECLSK2$X1RTHET= ECLSK2$X1MTHET= ECLSK2$X1BMI= ECLSK2$X1PUBPRI = NULL; head(ECLSK2)
+
+ECLSK3$X1TCHAPP = ECLSK3$X1TCHCON = ECLSK3$X1TCHPER = ECLSK3$X1TCHEXT= ECLSK3$X1TCHINT= ECLSK3$X1RTHET= ECLSK3$X1MTHET= ECLSK3$X1BMI= ECLSK3$X1PUBPRI = NULL; head(ECLSK3)
+
+ECLSK4$X1TCHAPP = ECLSK4$X1TCHCON = ECLSK4$X1TCHPER = ECLSK4$X1TCHEXT= ECLSK4$X1TCHINT= ECLSK4$X1RTHET= ECLSK4$X1MTHET= ECLSK4$X1BMI= ECLSK4$X1PUBPRI = NULL; head(ECLSK4)
+
+ECLSK5$X1TCHAPP = ECLSK5$X1TCHCON = ECLSK5$X1TCHPER = ECLSK5$X1TCHEXT= ECLSK5$X1TCHINT= ECLSK5$X1RTHET= ECLSK5$X1MTHET= ECLSK5$X1BMI= ECLSK5$X1PUBPRI = NULL; head(ECLSK5)
+```
+Now we are analyzing one data set, using matchIT and seeing if we can get a regular regression and then a multilevel model with time.  We matched everyone.
+```{r}
+library(MatchIt)
+ECLSK11 = as.data.frame(ECLSK11)
+m.out1 = matchit(X1PUBPRI ~ X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK11, method = "nearest", ratio = 1)
+
 
 plot(m.out1, type = "jitter")
 plot(m.out1, type = "hist")
@@ -86,155 +120,89 @@ m.data1 <- match.data(m.out1)
 m.dataMeans1 = apply(m.data1, 2, mean)
 m.dataSD1 = apply(m.data1,2, sd)
 
-# Need to change all of these to include the new covariates
-library(Zelig)
-m.out1$weights
-# Grabbing the parameter estimates and se's
-z.outSC1 = zelig(X1PRNCON ~ + S2REGSKL +  X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNSOC + X1PRNSAD + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD +X1PRNIMP + X1RTHET + X1MTHET, model = "ls" , data = match.data(m.out1))
-summary(z.outSC1)
-
-SCCof1 =  z.outSC1$get_coef()
-SCSes1 = z.outSC1$get_se()
-
-
-# Here is for the social interaction variable.
-z.outSI1 = zelig(X1PRNSOC ~ + S2REGSKL +  X1_CHSEX_R + X1HPARNT  + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON  + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD +X1PRNIMP + X1RTHET + X1MTHET, model = "ls", data = match.data(m.out1))
-summary(z.outSI1)
-SICof1 =  z.outSI1$get_coef()
-SISes1 = z.outSI1$get_se()
+#Now getting data for other analyses.  Need the weights to figure out what is included and then treat specifcies which in are the treatment (i.e. nonpublic schools)
+m.out1Data = as.data.frame(cbind(m.out1$X, weights = m.out1$weights, nonpublic = m.out1$treat))
+m.out1Data = m.out1Data[which(m.out1Data$weights == 1),]
+head(m.out1Data)
 
 ```
-Now we are getting residual analyses for first the data set
-```{r}
-resZ.outSC1 = as.data.frame(z.outSC1$get_residuals())
-resZ.outSC1 = resZ.outSC1[,1]
-resZ.outSC1 = as.data.frame(resZ.outSC1)
-resZ.outSC1 = as.data.frame(resZ.outSC1$resZ.outSC1)
 
-
-fitZ.outSC1 = as.data.frame(z.outSC1$get_predict())
-fitZ.outSC1 = fitZ.outSC1[,1]
-fitZ.outSC1 = as.data.frame(fitZ.outSC1)
-fitZ.outSC1 = as.data.frame(fitZ.outSC1$fitZ.outSC1)
-fitResidSC1 = cbind(fitZ.outSC1, resZ.outSC1)
-plot(fitResidSC1)
-plot(resZ.outSC1)
-
-resZ.outSC1 = scale(resZ.outSC1, center = TRUE, scale = TRUE)
-hist(resZ.outSC1, xlim = c(-5,5))
-above = sum(ifelse(resZ.outSC1 > 3, 1, 0))
-below = sum(ifelse(resZ.outSC1 < -3, 1, 0))
-totalS = sum(above, below)
-totalS / (7694 + 19)*100
-```
 Now we get the estimates for the second data set
 ```{r}
-setwd("~/Google Drive/PARCS/Projects/PropScore/Data")
-ECLSK2  = read.csv("ECLSK2.csv", header = TRUE)
-ECLSK2 = ECLSK2[c(-1)]
-ECLSK2 = na.omit(ECLSK2)
-ECLSK2 = as.data.frame(ECLSK2)
+ECLSK21 = as.data.frame(ECLSK21)
 
-m.out2 = matchit(S2REGSKL ~ X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD + X1PRNIMP + X1RTHET + X1MTHET, data = ECLSK1, method = "nearest", ratio = 1)
-
-plot(m.out2, type = "jitter")
-plot(m.out2, type = "hist")
+m.out2 = matchit(X1PUBPRI ~ X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK2, method = "nearest", ratio = 1)
 
 # Now getting descriptives
 m.data2 <- match.data(m.out2)
 m.dataMeans2 = apply(m.data2, 2, mean)
 m.dataSD2 = apply(m.data2,2, sd)
 
-
-library(Zelig)
-# Grabbing the parameter estimates and se's
-z.outSC2 = zelig(X1PRNCON ~ + S2REGSKL +  X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD +X1PRNIMP + X1RTHET + X1MTHET, model = "ls", data = match.data(m.out2))
-SCCof2 =  z.outSC2$get_coef()
-SCSes2 = z.outSC2$get_se()
-
-
+m.out2Data = as.data.frame(cbind(m.out2$X, weights = m.out2$weights, nonpublic = m.out2$treat))
+m.out2Data = m.out2Data[which(m.out2Data$weights == 1),]
+head(m.out2Data)
 ```
 Now get the estimates for the third data set
 ```{r}
-setwd("~/Google Drive/PARCS/Projects/PropScore/Data")
-ECLSK3  = read.csv("ECLSK3.csv", header = TRUE)
-ECLSK3 = ECLSK3[c(-1)]
-ECLSK3 = na.omit(ECLSK3)
-ECLSK3 = as.data.frame(ECLSK3)
 
-m.out3 = matchit(S2REGSKL ~ X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD + X1PRNIMP + X1RTHET + X1MTHET, data = ECLSK1, method = "nearest", ratio = 1)
+ECLSK31 = as.data.frame(ECLSK31)
 
-plot(m.out3, type = "jitter")
-plot(m.out3, type = "hist")
+m.out3 = matchit(X1PUBPRI ~ X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK3, method = "nearest", ratio = 1)
 
 # Now getting descriptives
 m.data3 <- match.data(m.out3)
 m.dataMeans3 = apply(m.data3, 2, mean)
 m.dataSD3 = apply(m.data3,2, sd)
 
-
-library(Zelig)
-# Grabbing the parameter estimates and se's
-z.outSC3 = zelig(X1PRNCON ~ + S2REGSKL +  X1_CHSEX_R + X1HPARNT  + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD +X1PRNIMP + X1RTHET + X1MTHET, model = "ls", data = match.data(m.out3))
-SCCof3 =  z.outSC3$get_coef()
-SCSes3 = z.outSC3$get_se()
-
+m.out3Data = as.data.frame(cbind(m.out3$X, weights = m.out3$weights, nonpublic = m.out3$treat))
+m.out3Data = m.out3Data[which(m.out3Data$weights == 1),]
+head(m.out3Data)
 
 ```
 Now get the estimates for the fourth data set
 ```{r}
-setwd("~/Google Drive/PARCS/Projects/PropScore/Data")
-ECLSK4  = read.csv("ECLSK4.csv", header = TRUE)
-ECLSK4 = ECLSK4[c(-1)]
-ECLSK4 = na.omit(ECLSK4)
-ECLSK4 = as.data.frame(ECLSK4)
+ECLSK41 = as.data.frame(ECLSK41)
 
-m.out4 = matchit(S2REGSKL ~ X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD + X1PRNIMP + X1RTHET + X1MTHET, data = ECLSK1, method = "nearest", ratio = 1)
-summary(m.out4)
-plot(m.out4, type = "jitter")
-plot(m.out4, type = "hist")
+m.out4 = matchit(X1PUBPRI ~ X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK4, method = "nearest", ratio = 1)
 
 # Now getting descriptives
 m.data4 <- match.data(m.out4)
 m.dataMeans4 = apply(m.data4, 2, mean)
 m.dataSD4 = apply(m.data4,2, sd)
 
-
-library(Zelig)
-# Grabbing the parameter estimates and se's
-z.outSC4 = zelig(X1PRNCON ~ + S2REGSKL +  X1_CHSEX_R + X1HPARNT  + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD +X1PRNIMP + X1RTHET + X1MTHET, model = "ls", data = match.data(m.out4))
-SCCof4 =  z.outSC4$get_coef()
-SCSes4 = z.outSC4$get_se()
-
-
+m.out4Data = as.data.frame(cbind(m.out4$X, weights = m.out4$weights, nonpublic = m.out4$treat))
+m.out4Data = m.out4Data[which(m.out4Data$weights == 1),]
+head(m.out4Data)
 ```
 Now we get the fifth data set estimates
 ```{r}
-setwd("~/Google Drive/PARCS/Projects/PropScore/Data")
-ECLSK5  = read.csv("ECLSK5.csv", header = TRUE)
-ECLSK5 = ECLSK5[c(-1)]
-ECLSK5 = na.omit(ECLSK5)
-ECLSK5 = as.data.frame(ECLSK5)
+ECLSK51 = as.data.frame(ECLSK51)
 
-m.out5 = matchit(S2REGSKL ~ X1_CHSEX_R + X1HPARNT + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNCON + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD + X1PRNIMP + X1RTHET + X1MTHET, data = ECLSK1, method = "nearest", ratio = 1)
-summary(m.out5)
-plot(m.out5, type = "jitter")
-plot(m.out5, type = "hist")
+m.out5 = matchit(X1PUBPRI ~ X1TCHAPP + X1TCHCON + X1TCHPER + X1TCHEXT + X1TCHINT + X1RTHET + X1MTHET + X1BMI, data = ECLSK5, method = "nearest", ratio = 1)
 
 # Now getting descriptives
 m.data5 <- match.data(m.out5)
 m.dataMeans5 = apply(m.data5, 2, mean)
 m.dataSD5 = apply(m.data5,2, sd)
 
+m.out5Data = as.data.frame(cbind(m.out5$X, weights = m.out5$weights, nonpublic = m.out5$treat))
+m.out5Data = m.out5Data[which(m.out5Data$weights == 1),]
+head(m.out5Data)
+```
+Now we need to merge the 11's with the 1's by only those with the same ID? But I did not include an ID variable.
 
-library(Zelig)
-# Grabbing the parameter estimates and se's
-z.outSC5 = zelig(X1PRNCON ~ + S2REGSKL +  X1_CHSEX_R + X1HPARNT  + X_HISP_R + X_WHITE_R + X_BLACK_R + X_ASIAN_R + X_AMINAN_R + X_HAWPI_R + X1PAR1RAC + X1PRNSOC + X1BMI + X1PAR1AGE + X1PAR1EMP + X1HTOTAL + X1POVTY + X1PAR1ED_I + X1KAGE_R + X1PRNSAD +X1PRNIMP + X1RTHET + X1MTHET, model = "ls", data = match.data(m.out5))
-SCCof5 =  z.outSC5$get_coef()
-SCSes5 = z.outSC5$get_se()
-
+Now make into long form for all five versions  
+```{r}
+ Something= reshape(data1, varying = list(c("X1TCHAPP", "X2TCHAPP", "X3TCHAPP", "X4TCHAPP"), c("X1TCHCON", "X2TCHCON", "X3TCHCON", "X4TCHCON"), c("X1TCHPER", "X2TCHPER", "X3TCHPER", "X4TCHPER"), c("X1TCHEXT", "X2TCHEXT", "X3TCHEXT", "X4TCHEXT"), c("X1TCHINT", "X2TCHINT", "X3TCHINT", "X4TCHINT"), c("X1RTHET", "X2RTHET", "X3RTHET", "X4RTHET"), c("X1MTHET", "X2MTHET", "X3MTHET", "X4RTHET"),c("X1MTHET", "X2MTHET", "X3MTHET", "X4MTHET"), c("X1BMI", "X2BMI", "X3BMI", "X4BMI"), c("X1PUBPRI", "X2PUBPRI", "X3PUBPRI","X4PUBPRI")), times = c(1,2,3,4), direction = "long")
+data1 = as.data.frame(data1)
+dim(data1)
+head(data1)
+```
+Now we need to do the multilevel analysis (All get means across time for variables).
+```{r}
 
 ```
+
 Now we need to combine the results for the descriptive statistics
 ```{r}
 library(Amelia)
