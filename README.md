@@ -610,8 +610,6 @@ $$ Level~2~Intercept:~~~{\beta_{0j} = \gamma_{00} + \gamma_{0j}*(Q) + u_{0j}} ~~
 
 $$ Level~2~Slope:~~~{\beta_{xj} = \gamma_{x0} + u_{xj}} ~~~ (1.2)$$
 $$Mixed~model: ~~~{y_{ij} = \gamma_{00}+\gamma_{10}(Time_{ij})*(Private_{j}) + \gamma_{x0}*(X)+ \gamma_{0j}*(Q) + u_{xj} + u_{0j} + e_{ij}} ~~~(1.3)$$
-Now I will put the model into nlme to analyze it longitudinally.  The first model is the null model that only contains the intercept for each person (i.e. their average self control value over time).  Then we compare the null model to a model with the covariates of interest with variable of interest the interaction between time and the PUBPRI variable where each person receives their own intercept and then compare that model to a model where each person receives their and intercept and slope (i.e. trajectory of a person’s self control over time).  I then compare each model using the anova package, which in all cases indicates that the model with random intercepts and slopes is a better fit relative to the null and random intercepts only models. 
-
 Here I am going to mean center the continuous variables to reduce the potential effect of multicollinearity.
 ```{r}
 head(ECLSK1)
@@ -642,7 +640,7 @@ ECLSK5Scale = scale(ECLSK5Scale, scale = FALSE)
 ECLSK5NoScale = cbind(ECLSK5[c(1:4)], ECLSK5[c(13:20)])
 ECLSK5 = cbind(ECLSK5NoScale, ECLSK5Scale)
 ```
-
+Now I will put the model into nlme to analyze it longitudinally.  The first model is the null model that only contains the intercept for each person (i.e. their average self control value over time).  Then we compare the null model to a model with the covariates of interest with variable of interest the interaction between time and the PUBPRI variable where each person receives their own intercept and then compare that model to a model where each person receives their and intercept and slope (i.e. trajectory of a person’s self control over time).  I then compare each model using the anova package, which in all cases indicates that the model with random intercepts and slopes is a better fit relative to the null and random intercepts only models.  In order to compare the models, I need to use restricted maximum likelihood estimation to ensure the degrees of freedom are comparable.  
 
 ```{r}
 head(ECLSK1)
@@ -695,10 +693,11 @@ model25 = lme(fixed = X1TCHCON ~ time*X1PUBPRI  +X1MTHET +  X1TCHAPP + X1TCHPER 
 
 model35 = lme(fixed = X1TCHCON ~ time*X1PUBPRI  +X1MTHET +  X1TCHAPP + X1TCHPER + X1TCHEXT + X1TCHAPP+X1TCHPER +X1TCHEXT+ X1TCHINT+X1MTHET+X1BMI +X1_CHSEX_R + X1_HISP_R +X1_BLACK_R+X1_ASIAN_R+X1_AMINAN_R+X1_MULTR_R+X1PAR1RAC, random = ~time | id, data = ECLSK5, method = "ML")
 
-anova(model15, model25, model35)
+model45 = lme(fixed = X1TCHCON ~ time*X1PUBPRI  +X1MTHET +  X1TCHAPP + X1TCHPER + X1TCHEXT + X1TCHAPP+X1TCHPER +X1TCHEXT+ X1TCHINT+X1MTHET+X1BMI +X1_CHSEX_R + X1_HISP_R +X1_BLACK_R+X1_ASIAN_R+X1_AMINAN_R+X1_MULTR_R+X1PAR1RAC, random = ~time | id, data = ECLSK5, correlation = corAR1(), method = "ML")
 
+anova(model15, model25, model35, model45)
 ```
-Next I need to grab the parameter estimate and standard error for the PUBPRI interaction with time variable, because this is the variable that can tell us if students in alternative to assigned public school change on the self control over time relative to students in assigned public schools.  
+Next I need to grab the parameter estimate and standard error for the PUBPRI interaction with time variable, because this is the variable that can tell us if students in alternative to assigned public school change on the self control over time relative to students in assigned public schools.  I will also get the degrees of freedom for later use.  
 
 Then I use the mi.meld function in Amelia to “average” the parameter estimates and standard errors across the five imputed datasets to create one parameter estimate and standard error for the interaction effect between PUBPRI and time.  
 ```{r}
