@@ -610,16 +610,12 @@ Level two variables: X1_CHSEX_R, X1_HISP_R, X1_BLACK_R, X1_ASIAN_R, X1_AMINAN_R,
 
 $$ Level~1:~~~{y_{ij} = \beta_{0j} + \beta_{1j}Time_{ij} + \beta_{xj}X_{ij} + e_{ij}}~~~ (1.1)$$
 
+
 $$ Level~2~Intercept:~~~{\beta_{0j} = \gamma_{00} + \gamma_{0Q}Q_{j} + u_{0j}} ~~~ (1.2)$$
 
-$$ Level~2~Slope Private:~~~{\beta_{1j} = \gamma_{10} + \gamma_{11}Private_{j} + u_{1j}} ~~~ (1.3)$$
 
-$$ Level~2~Slope~X's:~~~{\beta_{x} = \gamma_{x0} + u_{xj}} ~~~ (1.4)$$
-
-
-
-
-$$Mixed~model: ~~~{y_{ij} = \gamma_{00}+ \gamma_{0Q}(Q_{j}) +  \gamma_{10}(Time_{j}) + \gamma_{11}(Time_{ij})(Private_{j}) + \gamma_{x0}(X_{ij}) +u_{1j}(Time_{ij}) + u_{1j} + u_{xj}(X_{ij}) + u_{0j} + e_{ij}} ~~~(1.5)$$
+$$ Level~2~Slope~Private:~~~{\beta_{1j} = \gamma_{10} + \gamma_{11}Private_{j} + u_{1j}} ~~~ (1.3)$$
+$$Mixed~model: ~~~{y_{ij} = \gamma_{00}+ \gamma_{x0}X_{ij} + \gamma_{20}Private_{j} +  \gamma_{10}Time_{ij} + \gamma_{11}Time_{ij}Private_{j}+\gamma_{0Q}Q_{j} +u_{1j}Time_{ij} + u_{0j} + e_{ij}} ~~~(1.4)$$
 
 
 
