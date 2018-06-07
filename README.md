@@ -744,7 +744,7 @@ allParSesPaperSC = cbind(allParsPE, allParsSE)
 colnames(allParSesPaperSC) = c("ParameterEstimate", "StandardError")
 write.csv(allParSesPaperSC, "allParSesPaperSC.csv")
 ```
-Here I am creating the t-statistic and p-value using the parameter estimate for the interaction of the alternative with time variable for teacher reported self control by dividing the parameter estimate by the standard error to get the t-statistic, then using the degrees of freedom for the interaction effect to get the associated p-value and confidence interval.  
+Here I am creating the t-statistic and p-value using the parameter estimate for the interaction of the alternative with time variable for reported self control by dividing the parameter estimate by the standard error to get the t-statistic, then using the degrees of freedom for the interaction effect to get the associated p-value and confidence interval.  
 ```{r}
 allParSesPaperSC = data.frame(allParSesPaperSC)
 allParSesPaperSC$TStatistic = allParSesPaperSC$ParameterEstimate / allParSesPaperSC$StandardError
